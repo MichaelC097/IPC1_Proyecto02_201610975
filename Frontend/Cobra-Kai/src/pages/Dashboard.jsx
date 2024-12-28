@@ -129,12 +129,12 @@ const deleteProduct = async (id_producto) => {
             // Gráfica de barras
             const sortedProducts= [...products].sort((a,b)=>a.price-b.price);
             const barData={
-                labels: sortedProducts.map((product)=>product.name),
+                labels: sortedProducts.map((product)=>product.nombre_producto),
                 datasets:[
                     {
                         label:'Precio',
-                        data:sortedProducts.map((product)=>product.price),
-                    }
+                        data:sortedProducts.map((product)=>product.precio_producto),
+                    }   
                 ]
             }
             // Actualizamos la información de mi gráfica de barras

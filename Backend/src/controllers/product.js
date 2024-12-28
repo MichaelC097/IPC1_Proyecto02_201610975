@@ -8,6 +8,13 @@ module.exports.newProduct = async (req, res) => {
     try {
         const newProduct = req.body;
 
+        if (isNaN(newProduct.id_producto)) {
+            return res.status(400).json({
+                message: "El ID del producto debe ser un número.",
+                status: "error",
+            });
+        }
+
         // Validar que el precio sea mayor a 0
         if (newProduct.precio_producto <= 0) {
             return res.status(400).json({
@@ -25,7 +32,7 @@ module.exports.newProduct = async (req, res) => {
         }
 
         // Validar que no se repitan ni el ID ni el nombre
-        const exists = products.find(
+        const exists = products.some(
             (product) =>
                 product.id_producto === newProduct.id_producto ||
                 product.nombre_producto === newProduct.nombre_producto

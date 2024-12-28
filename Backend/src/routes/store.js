@@ -17,7 +17,7 @@ router.post('/store/new-product', newProduct);
 router.get('/store/get-products', allProducts);
 
 // Endpoint para eliminar un producto por ID
-router.delete('/store//delete-product/:id_producto',deleteProduct)
+router.delete('/store/delete-product/:id_producto',deleteProduct)
 
 // Endpoint para el login
 router.post('/store/login', login);

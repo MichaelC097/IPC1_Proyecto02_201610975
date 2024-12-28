@@ -2,3 +2,8 @@
 const products=[];
 
 module.exports=products;
+
+//
+const clientes=[];
+
+module.exports = clientes;
