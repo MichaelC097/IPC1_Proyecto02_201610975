@@ -18,8 +18,11 @@ import {
     Legend
 } from 'chart.js'
 
+
+//=================================================================================================
+// SECCIÓN DE CLIENTES
+//=================================================================================================
 ChartJS.register(CategoryScale,LinearScale,BarElement,ArcElement,Title,Tooltip,Legend)
-const Dashboard =()=>{  
     const [ productBody, setProductBody]= useState(''); // Para guardar el contenido de mi nuevo producto
     // UseState para administrar los productos que obtengamos de nuestro backend
     const[products, setProducts]=useState([]);
@@ -159,11 +162,150 @@ const deleteProduct = async (id_producto) => {
     },
     [products]);
     
+
+//=================================================================================================
+// SECCIÓN DE CLIENTES
+//=================================================================================================
+ChartJS.register(CategoryScale,LinearScale,BarElement,ArcElement,Title,Tooltip,Legend)
+const Dashboard =()=>{  
+    const [ clientBody, setClientBody]= useState(''); // Para guardar el contenido de nuevo cliente
+    const[clients, setClients]=useState([]); // Para los clientes obtenidos
+    const[barChartData,setBarChartData]=useState(null); // Gráfica de barras
+    const[pieChartData,setPieChartData]=useState(null); // Gráfica de pie
+
+    // Función que maneja el cambio de texto en el textarea
+    const handleChange=(event)=>{
+        setClientBody(event.target.value);
+    };
+
+    // Función que maneja el envío de un nuevo cliente
+    const handleSubmit=async()=>{
+        const data={
+            content:clientBody // Contenido del nuevo cliente
+        }
+        const response= await fetch('http://localhost:3005/store/new-client',{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json',
+            },
+            body: JSON.stringify(JSON.parse(data.content)),
+        });
+
+        const result = await response.json();
+        if(result.status==="success"){
+            await Swal.fire({
+                title:'<span style="color:#A0A4B4;">Nuevo Cliente</span>',
+                html:'<span style="color:#A0A4B4;">Creación de cliente exitosa</span>',
+                icon:"success",
+                confirmButtonText:"Cerrar",
+                background:"#222",
+                confirmButtonColor:"red",
+            })
+            await updateClients();
+        }else{
+            await Swal.fire({
+                title:'<span style="color:#A0A4B4;">Nuevo Cliente</span>',
+                html:'<span style="color:#A0A4B4;">Error al crear el cliente</span>',
+                icon:"error",
+                confirmButtonText:"Cerrar",
+                background:"#222",
+                confirmButtonColor:"red",
+            })
+        }
+    }
+
+    // Petición al backend para obtener todos los clientes
+    const getClients = async()=>{
+        const response= await fetch("http://localhost:3005/store/get-clients",{
+            method:"GET",
+            headers:{
+                'Content-Type':'application/json',
+            },
+        });
+        const clients = await response.json();
+        return clients;
+    }
+
+    // Función para actualizar los clientes
+    const updateClients = async()=>{
+        try{
+            var clients = await getClients();
+            setClients(clients);
+        }catch(error){
+            console.log(error)
+        }
+    }
+
+    // Función para eliminar un cliente
+    const deleteClient = async (id_cliente) => {
+        const response = await fetch(
+            `http://localhost:3005/store/delete-client/${id_cliente}`,
+            {
+                method: "DELETE",
+            }
+        );
+        const result = await response.json();
+        if (result.status === "success") {
+            await Swal.fire({
+                title: "Cliente eliminado",
+                text: result.message,
+                icon: "success",
+                confirmButtonText: "Cerrar",
+            });
+            await updateClients();
+        } else {
+            await Swal.fire({
+                title: "Error al eliminar",
+                text: result.message,
+                icon: "error",
+                confirmButtonText: "Cerrar",
+            });
+        }
+    };
+
+    // Configurar los datos de las gráficas mediante el uso de UseEffect
+    useEffect(()=>{
+        if(clients.length>0){
+            // Gráfica de barras (por ejemplo, cantidad de clientes por edad)
+            const sortedClients = [...clients].sort((a,b) => a.age - b.age); // Ordenamos por edad
+            const barData = {
+                labels: sortedClients.map((client) => client.name),
+                datasets: [
+                    {
+                        label: 'Edad',
+                        data: sortedClients.map((client) => client.age),
+                    }
+                ]
+            }
+            setBarChartData(barData);
+
+            // Gráfica de pie (clientes activos vs inactivos)
+            const activeClients = clients.filter((client) => client.status === 'active').length;
+            const inactiveClients = clients.length - activeClients;
+            const pieData = {
+                labels: ['Activos', 'Inactivos'],
+                datasets: [
+                    {
+                        data: [activeClients, inactiveClients],
+                        backgroundColor: ['rgba(24, 147, 219, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                    }
+                ]
+            };
+            setPieChartData(pieData);
+        }
+    }, [clients]);
+
+
+
+
     return(
         <>
-            <Background/>
+        <Background/>
+        <h1>Bienvenidos al Dashboard del sistema</h1>
+
+        <div>
             <div>
-                <h2>Bienvenido al dashboard de la tienda</h2>
+                <h2>Sección de productos</h2>
                 <textarea
                     rows="10"
                     cols="50"
@@ -174,7 +316,7 @@ const deleteProduct = async (id_producto) => {
                 <br/>
                 <button onClick={handleSubmit}>Enviar</button>
             </div>
-            <h1>Productos registrados en el sistema</h1>
+            <h2>Productos registrados en el sistema</h2>
             <div className="table-container">
                 <Table striped bordered hover variant='dark'>
                     <thead>
@@ -209,17 +351,80 @@ const deleteProduct = async (id_producto) => {
                         )}  
                     </tbody>
                 </Table>
-                <h1>Gráfica de productos ordenados por precio</h1>
+                <h2>Gráfica de productos ordenados por precio</h2>
                 <div style={{width:'70%', margin:'auto'}}>
                     {barChartData? <Bar data={barChartData}/>:<p>Cargando gráfica......</p>}
                 </div>
-                <h1>Gráfica de productos con precio&gt; 100 vs precio&lt;=100</h1>
+                <h2>Gráfica de productos con precio&gt; 100 vs precio&lt;=100</h2>
                 <div style={{width:'70%', margin:'auto'}}>
                     {pieChartData? <Pie data={pieChartData}/>:<p>Cargando gráfica......</p>}
                 </div>
             </div>
-        </>
+        </div>
 
+
+
+
+        <div>
+            <div>
+                <h2>Sección de clientes</h2>
+                <textarea
+                    rows="10"
+                    cols="50"
+                    placeholder='Crea un nuevo cliente aquí.....'
+                    value={clientBody} // Valor del textarea almacenado en mi variable del contenido del cliente
+                    onChange={handleChange} // Función para actualizar el estado de mi cliente
+                />
+                <br/>
+                <button onClick={handleSubmit}>Enviar</button>
+            </div>
+            <h2>Clientes registrados en el sistema</h2>
+            <div className="table-container">
+                <Table striped bordered hover variant='dark'>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombre</th>
+                            <th>Edad</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        { clients.length > 0 ? (
+                            clients.map((client) => (
+                                <tr key={client.id_cliente}>
+                                    <td>{client.id_cliente}</td>
+                                    <td>{client.name}</td>
+                                    <td>{client.age}</td>
+                                    <td>{client.status}</td>
+                                    <td>
+                                        <button onClick={() => deleteClient(client.id_cliente)}>
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5">No hay clientes registrados</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </Table>
+
+                <h2>Gráfica de clientes ordenados por edad</h2>
+                <div style={{width:'70%', margin:'auto'}}>
+                    {barChartData ? <Bar data={barChartData} /> : <p>Cargando gráfica......</p>}
+                </div>
+
+                <h2>Gráfica de clientes activos vs inactivos</h2>
+                <div style={{width:'70%', margin:'auto'}}>
+                    {pieChartData ? <Pie data={pieChartData} /> : <p>Cargando gráfica......</p>}
+                </div>
+            </div>
+        </div>
+        </>
     );
 }
 
